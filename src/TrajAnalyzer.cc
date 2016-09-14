@@ -34,6 +34,32 @@ int TrajAnalyzer::subdetidIsOnPixel(uint32_t subdetid)
 	return isPixelHit;
 }
 
+std::pair<float, float> TrajAnalyzer::getLocalXY(const TrajectoryMeasurement& measurement)
+{
+	std::pair<float, float> returnValue;
+	static TrajectoryStateCombiner trajStateComb;
+	TrajectoryStateOnSurface trajStateOnSurface = trajStateComb(measurement.forwardPredictedState(), measurement.backwardPredictedState());
+	LocalPoint localPosition = trajStateOnSurface.localPosition();
+	returnValue.first  = localPosition.x();
+	returnValue.second = localPosition.y();
+	return returnValue;
+}
+
+float TrajAnalyzer::trajMeasurementDistanceSquared(const TrajectoryMeasurement& lhs, const TrajectoryMeasurement& rhs)
+{
+	std::pair<float, float> lhsLocalXY = getLocalXY(lhs);
+	std::pair<float, float> rhsLocalXY = getLocalXY(rhs);
+	float dxHit = lhsLocalXY.first  - rhsLocalXY.first;
+	float dyHit = lhsLocalXY.second - rhsLocalXY.second;
+	float distanceSquared = dxHit * dxHit + dyHit * dyHit;
+	return distanceSquared;
+}
+
+float TrajAnalyzer::trajMeasurementDistance(const TrajectoryMeasurement& lhs, const TrajectoryMeasurement& rhs)
+{
+	return sqrt(trajMeasurementDistanceSquared(lhs, rhs));
+}
+
 reco::VertexCollection::const_iterator TrajAnalyzer::findClosestVertexToTrack(const reco::TrackRef& track, const edm::Handle<reco::VertexCollection>& vertexCollectionHandle)
 {
 	reco::VertexCollection::const_iterator closestVtx = vertexCollectionHandle -> end();
