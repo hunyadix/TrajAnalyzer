@@ -25,3 +25,33 @@ int TrajAnalyzer::trajectoryHasPixelHit(const edm::Ref<std::vector<Trajectory>>&
 	}
 	return 1;
 }
+
+int TrajAnalyzer::subdetidIsOnPixel(uint32_t subdetid)
+{
+	bool isPixelHit = false;
+	isPixelHit |= subdetid == PixelSubdetector::PixelBarrel;
+	isPixelHit |= subdetid == PixelSubdetector::PixelEndcap;
+	return isPixelHit;
+}
+
+reco::VertexCollection::const_iterator TrajAnalyzer::findClosestVertexToTrack(const reco::TrackRef& track, const edm::Handle<reco::VertexCollection>& vertexCollectionHandle)
+{
+	reco::VertexCollection::const_iterator closestVtx = vertexCollectionHandle -> end();
+	// FIXME: This is awkward, change the minDistance to the distance of the first valid vertex
+	double minDistance = 9999;
+	for(reco::VertexCollection::const_iterator it = vertexCollectionHandle -> begin() ; it != vertexCollectionHandle -> end() ; ++it)
+	{
+		// Filter out invalid vertices
+		if(!it -> isValid()) continue;
+		double trkVtxD0 = track -> dxy(it -> position()) * -1.0;
+		double trkVtxDz = track -> dz (it -> position());
+		// Comparing squareroots should be quick enough, if required, change this to a comparison of squares
+		double trkVtxDB = sqrt(trkVtxD0 * trkVtxD0 + trkVtxDz * trkVtxDz);
+		if(trkVtxDB < minDistance)
+		{
+			minDistance = trkVtxDB;
+			closestVtx=it;
+		}
+	}
+	return closestVtx;
+}
