@@ -9,6 +9,13 @@
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
 
+#ifndef NOVAL_I
+#define NOVAL_I -9999
+#endif
+#ifndef NOVAL_F
+#define NOVAL_F -9999.0
+#endif
+
 class TrajAnalyzer
 {
 	private:

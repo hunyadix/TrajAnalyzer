@@ -75,7 +75,7 @@ void TrajAnalyzer::trajMeasurementDistance(const TrajectoryMeasurement& lhs, con
 	distance = sqrt(distance);
 	dx       = sqrt(dx);
 	dy       = sqrt(dy);
-	if(dx = NOVAL_F || dy == NOVAL_F) distance = NOVAL_F;
+	if((dx = NOVAL_F) || (dy == NOVAL_F)) distance = NOVAL_F;
 }
 
 reco::VertexCollection::const_iterator TrajAnalyzer::findClosestVertexToTrack(const reco::TrackRef& track, const edm::Handle<reco::VertexCollection>& vertexCollectionHandle)
