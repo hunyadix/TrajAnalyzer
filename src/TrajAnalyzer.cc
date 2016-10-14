@@ -2,8 +2,8 @@
 
 int TrajAnalyzer::trajectoryHasPixelHit(const edm::Ref<std::vector<Trajectory>>& trajectory)
 {
-	bool is_barrel_pixel_track = false;
-	bool is_endcap_pixel_track = false;
+	bool isBarrelPixelTrack = false;
+	bool isEndcapPixelTrack = false;
 	// Looping on the full track to check if we have pixel hits 
 	// and to count the number of strip hits 
 	for(auto& measurement: trajectory -> measurements())
@@ -16,10 +16,10 @@ int TrajAnalyzer::trajectoryHasPixelHit(const edm::Ref<std::vector<Trajectory>>&
 		DetId det_id = hit -> geographicalId();
 		uint32_t subdetid = (det_id.subdetId());
 		// For saving the pixel hits
-		if(subdetid == PixelSubdetector::PixelBarrel) is_barrel_pixel_track = true;
-		if(subdetid == PixelSubdetector::PixelEndcap) is_endcap_pixel_track = true;
+		if(subdetid == PixelSubdetector::PixelBarrel) isBarrelPixelTrack = true;
+		if(subdetid == PixelSubdetector::PixelEndcap) isEndcapPixelTrack = true;
 	}
-	if(!is_barrel_pixel_track && !is_endcap_pixel_track)
+	if(!isBarrelPixelTrack && !isEndcapPixelTrack)
 	{
 		return 0;
 	}
@@ -80,4 +80,23 @@ reco::VertexCollection::const_iterator TrajAnalyzer::findClosestVertexToTrack(co
 		}
 	}
 	return closestVtx;
+}
+
+
+float TrajAnalyzer::getClosestOtherTrackDistanceByLooping(const TrajectoryMeasurement& measurement, edm::Handle<TrajTrackAssociationCollection>& trajTrackCollectionHandle)
+{
+	double closestTrajMeasurementDistanceSquared = trajMeasurementDistanceSquared(measurement, *(trajTrackCollectionHandle -> begin() -> key -> measurements().begin()));
+	for(const auto& otherTrackKeypair: *trajTrackCollectionHandle)
+	{
+		const edm::Ref<std::vector<Trajectory>> otherTraj = otherTrackKeypair.key;
+		for(const TrajectoryMeasurement& otherTrajMeasurement: otherTraj -> measurements())
+		{
+			float distanceSquared = trajMeasurementDistanceSquared(measurement, otherTrajMeasurement);
+			if(distanceSquared < closestTrajMeasurementDistanceSquared)
+			{
+				closestTrajMeasurementDistanceSquared = distanceSquared;
+			}
+		}
+	}
+	return sqrt(closestTrajMeasurementDistanceSquared);
 }

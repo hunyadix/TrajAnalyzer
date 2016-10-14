@@ -21,6 +21,7 @@ class TrajAnalyzer
 		static float                                  trajMeasurementDistanceSquared(const TrajectoryMeasurement& lhs, const TrajectoryMeasurement& rhs);
 		static float                                  trajMeasurementDistance(const TrajectoryMeasurement& lhs, const TrajectoryMeasurement& rhs);
 		static reco::VertexCollection::const_iterator findClosestVertexToTrack(const reco::TrackRef& track, const edm::Handle<reco::VertexCollection>& vertexCollectionHandle);
+		static float                                  getClosestOtherTrackDistanceByLooping(const TrajectoryMeasurement& measurement, edm::Handle<TrajTrackAssociationCollection>& trajTrackCollectionHandle);
 };
 
 #endif
