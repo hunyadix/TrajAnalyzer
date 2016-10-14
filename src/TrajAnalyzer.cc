@@ -75,6 +75,7 @@ void TrajAnalyzer::trajMeasurementDistance(const TrajectoryMeasurement& lhs, con
 	distance = sqrt(distance);
 	dx       = sqrt(dx);
 	dy       = sqrt(dy);
+	if(dx = NOVAL_F || dy == NOVAL_F) distance = NOVAL_F;
 }
 
 reco::VertexCollection::const_iterator TrajAnalyzer::findClosestVertexToTrack(const reco::TrackRef& track, const edm::Handle<reco::VertexCollection>& vertexCollectionHandle)
@@ -123,6 +124,8 @@ float TrajAnalyzer::getClosestOtherTrackDistanceByLooping(const TrajectoryMeasur
 }
 void TrajAnalyzer::getClosestOtherTrackDistanceByLooping(const TrajectoryMeasurement& measurement, edm::Handle<TrajTrackAssociationCollection>& trajTrackCollectionHandle, float& distance, float& dx, float& dy)
 {
+	dx = NOVAL_F;
+	dy = NOVAL_F;
 	std::vector<TrajectoryMeasurement>::const_iterator closestMeasurementIt = trajTrackCollectionHandle -> begin() -> key -> measurements().begin();
 	if(&*closestMeasurementIt == &measurement) ++closestMeasurementIt;
 	double closestTrajMeasurementDistanceSquared = trajMeasurementDistanceSquared(measurement, *closestMeasurementIt);
