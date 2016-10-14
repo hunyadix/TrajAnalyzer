@@ -54,10 +54,27 @@ float TrajAnalyzer::trajMeasurementDistanceSquared(const TrajectoryMeasurement& 
 	float distanceSquared = dxHit * dxHit + dyHit * dyHit;
 	return distanceSquared;
 }
+void TrajAnalyzer::trajMeasurementDistanceSquared(const TrajectoryMeasurement& lhs, const TrajectoryMeasurement& rhs, float& distanceSquared, float& dxSquared, float& dySquared)
+{
+	std::pair<float, float> lhsLocalXY = getLocalXY(lhs);
+	std::pair<float, float> rhsLocalXY = getLocalXY(rhs);
+	float dxHit = lhsLocalXY.first  - rhsLocalXY.first;
+	float dyHit = lhsLocalXY.second - rhsLocalXY.second;
+	dxSquared = dxHit * dxHit;
+	dySquared = dyHit * dyHit;
+	distanceSquared = dxSquared * dySquared;
+}
 
 float TrajAnalyzer::trajMeasurementDistance(const TrajectoryMeasurement& lhs, const TrajectoryMeasurement& rhs)
 {
 	return sqrt(trajMeasurementDistanceSquared(lhs, rhs));
+}
+void TrajAnalyzer::trajMeasurementDistance(const TrajectoryMeasurement& lhs, const TrajectoryMeasurement& rhs, float& distance, float& dx, float& dy)
+{
+	trajMeasurementDistanceSquared(lhs, rhs, distance, dx, dy);
+	distance = sqrt(distance);
+	dx       = sqrt(dx);
+	dy       = sqrt(dy);
 }
 
 reco::VertexCollection::const_iterator TrajAnalyzer::findClosestVertexToTrack(const reco::TrackRef& track, const edm::Handle<reco::VertexCollection>& vertexCollectionHandle)
@@ -85,18 +102,43 @@ reco::VertexCollection::const_iterator TrajAnalyzer::findClosestVertexToTrack(co
 
 float TrajAnalyzer::getClosestOtherTrackDistanceByLooping(const TrajectoryMeasurement& measurement, edm::Handle<TrajTrackAssociationCollection>& trajTrackCollectionHandle)
 {
-	double closestTrajMeasurementDistanceSquared = trajMeasurementDistanceSquared(measurement, *(trajTrackCollectionHandle -> begin() -> key -> measurements().begin()));
+	std::vector<TrajectoryMeasurement>::const_iterator closestMeasurementIt = trajTrackCollectionHandle -> begin() -> key -> measurements().begin();
+	if(&*closestMeasurementIt == &measurement) ++closestMeasurementIt;
+	double closestTrajMeasurementDistanceSquared = trajMeasurementDistanceSquared(measurement, *closestMeasurementIt);
 	for(const auto& otherTrackKeypair: *trajTrackCollectionHandle)
 	{
 		const edm::Ref<std::vector<Trajectory>> otherTraj = otherTrackKeypair.key;
-		for(const TrajectoryMeasurement& otherTrajMeasurement: otherTraj -> measurements())
+		for(auto otherTrajMeasurementIt = otherTraj -> measurements().begin(); otherTrajMeasurementIt != otherTraj -> measurements().end(); ++otherTrajMeasurementIt)
 		{
-			float distanceSquared = trajMeasurementDistanceSquared(measurement, otherTrajMeasurement);
+			if(&*otherTrajMeasurementIt == &measurement) continue;
+			float distanceSquared = trajMeasurementDistanceSquared(measurement, *otherTrajMeasurementIt);
 			if(distanceSquared < closestTrajMeasurementDistanceSquared)
 			{
+				// closestMeasurementIt = otherTrajMeasurementIt;
 				closestTrajMeasurementDistanceSquared = distanceSquared;
 			}
 		}
 	}
 	return sqrt(closestTrajMeasurementDistanceSquared);
+}
+void TrajAnalyzer::getClosestOtherTrackDistanceByLooping(const TrajectoryMeasurement& measurement, edm::Handle<TrajTrackAssociationCollection>& trajTrackCollectionHandle, float& distance, float& dx, float& dy)
+{
+	std::vector<TrajectoryMeasurement>::const_iterator closestMeasurementIt = trajTrackCollectionHandle -> begin() -> key -> measurements().begin();
+	if(&*closestMeasurementIt == &measurement) ++closestMeasurementIt;
+	double closestTrajMeasurementDistanceSquared = trajMeasurementDistanceSquared(measurement, *closestMeasurementIt);
+	for(const auto& otherTrackKeypair: *trajTrackCollectionHandle)
+	{
+		const edm::Ref<std::vector<Trajectory>> otherTraj = otherTrackKeypair.key;
+		for(auto otherTrajMeasurementIt = otherTraj -> measurements().begin(); otherTrajMeasurementIt != otherTraj -> measurements().end(); ++otherTrajMeasurementIt)
+		{
+			if(&*otherTrajMeasurementIt == &measurement) continue;
+			float distanceSquared = trajMeasurementDistanceSquared(measurement, *otherTrajMeasurementIt);
+			if(distanceSquared < closestTrajMeasurementDistanceSquared)
+			{
+				closestMeasurementIt = otherTrajMeasurementIt;
+				closestTrajMeasurementDistanceSquared = distanceSquared;
+			}
+		}
+	}
+	trajMeasurementDistance(measurement, *closestMeasurementIt, distance, dx, dy);
 }
